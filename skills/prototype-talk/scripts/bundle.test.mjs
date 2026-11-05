@@ -13,13 +13,13 @@ test('project viewer bundles core scripts and assets for standalone use', () => 
     const scriptDir = fileURLToPath(new URL('.', import.meta.url));
     bundleProjectViewer({ sourceRoot: root, outputRoot: path.join(root, 'docs', 'prototype-talk') }, scriptDir, path.join(scriptDir, '..', 'assets'));
     const bundled = path.join(root, 'docs', 'prototype-talk', 'viewer', 'scripts');
-    for (const name of ['server.mjs', 'bundle.mjs', 'input.mjs', 'doctor.mjs', 'jsx-source.mjs', 'operation-families.mjs', 'metrics.mjs', 'evidence-audit.mjs', 'contracts.mjs', 'source-impact.mjs', 'figma-import.mjs', 'browser-evidence.mjs']) assert.equal(fs.existsSync(path.join(bundled, name)), true, `${name} missing`);
+    for (const name of ['server.mjs', 'bundle.mjs', 'input.mjs', 'doctor.mjs', 'conversation-task.mjs', 'conversation-bridge.mjs', 'schema-validation.mjs', 'jsx-source.mjs', 'operation-families.mjs', 'metrics.mjs', 'evidence-audit.mjs', 'contracts.mjs', 'source-impact.mjs', 'figma-import.mjs', 'browser-evidence.mjs']) assert.equal(fs.existsSync(path.join(bundled, name)), true, `${name} missing`);
     assert.equal(fs.existsSync(path.join(bundled, 'vendor', 'babel-parser', 'index.cjs')), true);
     assert.equal(fs.existsSync(path.join(root, 'docs', 'prototype-talk', 'viewer', 'assets', 'anchor-core.js')), true);
     assert.equal(fs.existsSync(path.join(root, 'docs', 'prototype-talk', 'viewer', 'assets', 'finder.js')), true);
     assert.equal(fs.existsSync(path.join(root, 'docs', 'prototype-talk', 'viewer', 'assets', 'finder.LICENSE')), true);
     assert.equal(fs.existsSync(path.join(root, 'docs', 'prototype-talk', 'viewer', 'assets', 'blind-review-template.html')), true);
-    assert.match(fs.readFileSync(path.join(root, 'docs', 'prototype-talk', 'README.md'), 'utf8'), /--model-parse/);
+    assert.match(fs.readFileSync(path.join(root, 'docs', 'prototype-talk', 'README.md'), 'utf8'), /待解析队列.*当前对话/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

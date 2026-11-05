@@ -54,7 +54,7 @@ export function progressiveBatches(pages) {
   if (!entry) return [];
   const rest = pages.filter((item) => item !== entry);
   const screens = rest.filter((item) => item.startsWith('/?screen='));
-  return [[entry], ...(screens.length ? [screens] : []), ...pageBatches(rest.filter((item) => !screens.includes(item)), 2)];
+  return [[entry], ...pageBatches(screens, 2), ...pageBatches(rest.filter((item) => !screens.includes(item)), 2)];
 }
 
 export function movePageToFront(queue, jobs, pagePath) {

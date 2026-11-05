@@ -56,9 +56,9 @@ def stop(process):
         process.stdout.close()
 
 
-def start_server(script, demo):
+def start_server(script, demo, mode="--index-only"):
     process = subprocess.Popen(
-        [NODE, str(script), "--source", str(demo), "--port", "0", "--index-only"],
+        [NODE, str(script), "--source", str(demo), "--port", "0", mode],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -96,6 +96,47 @@ def check_http(base_url):
             assert response.status == 200 and response.read(), f"{name} is unavailable"
 
 
+def check_conversation_handoff(skill, demo):
+    process, base = start_server(skill / "scripts/server.mjs", demo, "--conversation-model")
+    task_script = skill / "scripts/conversation-task.mjs"
+    port = base.split(":")[2].rstrip("/")
+    try:
+        task = json.loads(run_command(NODE, task_script, "next", "--source", demo, "--port", port))
+        assert task["type"] == "page_batch" and "index.html" in task["prompt"]
+        page = {"path": "/index.html", "title": "保存名称", "purpose": "输入并保存名称。",
+                "layout": [{"text": "页面显示名称输入框和保存按钮。", "origin": "source_observed", "evidence": ["index.html:1"]}],
+                "functions": [], "states": [], "data": [], "open_questions": [], "evidence": ["index.html:1"]}
+        submit = {"job_id": task["job_id"], "source_snapshot_id": task["source_snapshot_id"],
+                  "evidence_hash": task["evidence_hash"], "result": {"pages": [page]}}
+        result_file = demo.parent / "conversation-page-result.json"
+        result_file.write_text(json.dumps(submit, ensure_ascii=False), encoding="utf-8")
+        reply = json.loads(run_command(NODE, task_script, "submit", "--source", demo, "--port", port, "--file", result_file))
+        assert reply["status"] == "returned"
+        state = json.loads((demo / "docs/prototype-talk/review-state.json").read_text(encoding="utf-8"))
+        assert state["page_specs"][-1]["generator"] == "conversation"
+        operation_id = state["operations"][0]["operation_id"]
+        request = urllib.request.Request(base + "__tech/jobs", data=json.dumps({"operation_id": operation_id}).encode(),
+                                         headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(request, timeout=5) as response:
+            assert response.status == 202
+        operation = json.loads(run_command(NODE, task_script, "next", "--source", demo, "--port", port))
+        assert operation["type"] == "operation" and operation["job_id"]
+        card = {"title": "保存名称", "summary": "点击保存后更新当前页面标题。",
+                "page_context": {"purpose": "输入名称", "layout": "输入框和保存按钮", "evidence": ["index.html:1"]},
+                "claims": [{"section": "behavior", "text": "保存后更新页面标题。", "detail": "按钮调用保存函数。",
+                            "origin": "source_observed", "evidence": ["index.html:1", "app.js:1"]}],
+                "issues": [], "expected_effects": [], "expected_after": {"route_contains": "", "visible_text": ""}}
+        submit = {"job_id": operation["job_id"], "source_snapshot_id": operation["source_snapshot_id"],
+                  "evidence_hash": operation["evidence_hash"], "result": card}
+        result_file.write_text(json.dumps(submit, ensure_ascii=False), encoding="utf-8")
+        reply = json.loads(run_command(NODE, task_script, "submit", "--source", demo, "--port", port, "--file", result_file))
+        assert reply["status"] == "returned"
+        state = json.loads((demo / "docs/prototype-talk/review-state.json").read_text(encoding="utf-8"))
+        assert state["cards"][-1]["generator"] == "conversation"
+    finally:
+        stop(process)
+
+
 def verify_archive(archive_path):
     with tempfile.TemporaryDirectory(prefix="prototype-talk-release-check-") as temporary:
         temporary = Path(temporary)
@@ -119,6 +160,7 @@ def verify_archive(archive_path):
             check_http(first_url)
         finally:
             stop(first)
+        check_conversation_handoff(skill, demo)
 
         viewer = demo / "docs/prototype-talk/viewer"
         assert (viewer / "scripts/source-regions.mjs").is_file()

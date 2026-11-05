@@ -1,6 +1,6 @@
 # Prototype Talk
 
-Prototype Talk is a local Codex Skill for reviewing a runnable Web prototype **beside the prototype itself**. It connects the visible UI, source code, PRD/Mock, and recorded interactions to product explanations, technical drafts, evidence, and review tasks.
+Prototype Talk is a local agent Skill that explains a runnable Web prototype **beside the prototype itself**. It connects the visible UI, source code, PRD/Mock, and recorded interactions to product explanations, technical drafts, evidence, and review tasks. On first use, it asks which interpretation mode and data scope you authorize: the current conversation model, optional Codex CLI automation, or local indexing only.
 
 > Experimental release. Generated explanations and API contracts are drafts until a product or engineering reviewer confirms them.
 
@@ -10,6 +10,7 @@ Prototype Talk is a local Codex Skill for reviewing a runnable Web prototype **b
 - Explains the selected page, dialog, field, or operation; records corrections and missing rules in `docs/prototype-talk/` inside the Demo project.
 - Separates PRD requirements, Demo source, actual browser observations, and technical proposals. The product, technical, evidence, and review views use the same saved state.
 - Exports requirement and technical handoff documents with each review item's confirmation status.
+- Uses the model in the current conversation to write cards while the chat is active. Codex CLI is optional when cards must keep generating after the chat ends; it is not required to use the Skill.
 
 The complete local workflow supports runnable HTML/JavaScript and React JSX/TSX Web demos with related PRD or Mock material. Vue SFC parsing is not yet supported. Figma Design, published Figma Sites, and Axure links currently provide **partial evidence review**; they do not yet receive the full interactive local-source viewer or prove a production API.
 
@@ -25,22 +26,26 @@ Or clone this repository and copy the entire `skills/prototype-talk` directory i
 
 ## Local preview
 
-Node.js is required. Run from the repository root and replace `/path/to/demo`:
+Node.js is required. When invoked as a Skill, it confirms the mode and data scope before starting model interpretation. The following are manual commands for the **current conversation** option after that authorization; run them from the repository root and replace `/path/to/demo`:
 
 ```bash
 node skills/prototype-talk/scripts/doctor.mjs --source /path/to/demo
-node skills/prototype-talk/scripts/server.mjs --source /path/to/demo --port 4179 --index-only
+node skills/prototype-talk/scripts/server.mjs --source /path/to/demo --port 4179
 ```
 
-Open the URL printed by the server. `--index-only` scans locally and shows preliminary facts or saved cards; it does not create new complete model explanations.
+Open the URL printed by the server. The default mode queues page and operation tasks for the model in the **current conversation**. In that conversation, the Skill claims a scoped task, produces the structured explanation and writes it back; the floating panel updates from saved results. No Codex CLI is required. Run `node skills/prototype-talk/scripts/conversation-task.mjs next --source /path/to/demo --port 4179 --output /tmp/prototype-task.json` to inspect the handoff; submit results with the same script's `submit --file` command as described in [conversation-model.md](skills/prototype-talk/references/conversation-model.md). The Skill normally performs those commands for the user.
 
-To generate page and operation explanations, run with `--model-parse` **after authorizing the configured ChatGPT/Codex destination and the specific project-data scope**. That scope can include relevant source code, PRD, Mock, and recorded interactions with input changes and before/after page states. The local output folder does not imply that model analysis stays on device. An installed and signed-in Codex CLI is needed for this mode.
+For automatic processing even after the current chat ends, use the optional Codex CLI mode after confirming its ChatGPT/Codex destination and the project-data scope. That scope can include relevant source code, PRD, Mock, and recorded interactions with input changes and before/after page states. The local output folder does not imply that model analysis stays on device. An installed and signed-in Codex CLI is needed only for this optional mode.
+
+On first use for a project, the Skill proactively asks one question combining the interpretation mode and the exact data authorization: current conversation, Codex CLI if available, or local index only. It reuses authorization already given in the conversation for the same project, destination and scope. The flag below is passed by the Skill to its local server after CLI authorization; it is not a setting you must choose for every control in the browser.
 
 ```bash
-node skills/prototype-talk/scripts/server.mjs --source /path/to/demo --port 4179 --model-parse
+node skills/prototype-talk/scripts/server.mjs --source /path/to/demo --port 4179 --cli-model --model-authorized
 ```
 
 The server binds to `127.0.0.1`. It does not require `npm install` or `esbuild` at runtime. See [SKILL.md](skills/prototype-talk/SKILL.md) for the complete workflow and [link input limits](skills/prototype-talk/references/link-inputs.md) for Figma/Axure.
+
+`--index-only` remains available when only local indexing and existing saved cards are wanted. Browser clicks in the default conversation mode remain queued after the chat ends and are resumed on the next Skill invocation; they cannot awaken a closed chat on their own.
 
 The generated `docs/prototype-talk/viewer/` is a copy of the Skill's runtime at export time. After updating the Skill, restart it against the Demo to refresh that viewer before sharing the Demo with someone else.
 

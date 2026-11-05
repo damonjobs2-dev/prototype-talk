@@ -207,7 +207,7 @@
     const trace = { ...pending, after: snapshot(), finished_at: new Date().toISOString() };
     trace.observed_region = observedRegion(trace);
     pending = null;
-    state.localStatus = state.data?.ai_enabled && !currentCard(trace.operation_id) ? '已提交：等待本地解读任务' : '';
+    state.localStatus = state.data?.ai_enabled && !currentCard(trace.operation_id) ? state.data.model_mode === 'conversation' ? '已排队：等待当前对话处理' : '已提交：等待本地解读任务' : '';
     render();
     const payload = JSON.stringify(trace);
     if (beacon && navigator.sendBeacon) { navigator.sendBeacon(`${API}/trace`, new Blob([payload], { type: 'application/json' })); return; }
@@ -290,7 +290,7 @@
     const startedAt = Date.parse(job.started_at || '');
     const queued = Number.isFinite(job.queue_duration_ms) ? job.queue_duration_ms : Number.isFinite(createdAt) && Number.isFinite(startedAt) ? Math.max(0, startedAt - createdAt) : null;
     if (job.status === 'queued' && Number.isFinite(createdAt)) return `排队中 · 已等待 ${formatJobTime(now - createdAt)}`;
-    if (['analyzing', 'validating'].includes(job.status) && Number.isFinite(startedAt)) return `${job.status === 'analyzing' ? '生成中' : '校验中'} · 已用 ${formatJobTime(now - startedAt)}${queued !== null ? ` · 排队 ${formatJobTime(queued)}` : ''}`;
+    if (['analyzing', 'validating'].includes(job.status) && Number.isFinite(startedAt)) return state.data?.model_mode === 'conversation' ? '当前对话已领取，写回后显示结果' : `${job.status === 'analyzing' ? '生成中' : '校验中'} · 已用 ${formatJobTime(now - startedAt)}${queued !== null ? ` · 排队 ${formatJobTime(queued)}` : ''}`;
     if (['returned', 'failed'].includes(job.status) && Number.isFinite(job.duration_ms)) return `${queued !== null ? '本次总耗时' : '本次生成用时'} ${formatJobTime(job.duration_ms + (queued || 0))}${queued !== null ? ` · 排队 ${formatJobTime(queued)}` : ''}`;
     return '';
   }
@@ -868,7 +868,7 @@
     if (job && ['queued', 'analyzing', 'validating'].includes(job.status)) return `<div class="tr-update-status">这一步正在补全说明 · ${escapeHtml(statusLabel(job.status))}。可先查看下方的页面与源码线索。${jobTimingHtml(job)}</div>`;
     if (job?.status === 'failed' && !card) return `<div class="tr-update-status">解读失败：${escapeHtml(job.error || '可稍后重试')}${jobTimingHtml(job)}</div>`;
     if (job?.status === 'returned' && card && jobTimingText(job)) return `<div class="tr-generation-time">卡片已生成${jobTimingHtml(job)}</div>`;
-    if (state.data?.ai_enabled && !card && operation) return '<div class="tr-update-status">这一步还没有完整解读。已显示可定位的线索；点击后会在后台补全。</div>';
+    if (state.data?.ai_enabled && !card && operation) return `<div class="tr-update-status">这一步还没有完整解读。已显示可定位的线索；${state.data.model_mode === 'conversation' ? '点击后进入待解析队列，当前对话处理后显示结果。' : '点击后会在后台补全。'}</div>`;
     return '';
   }
   function ruleEditorHtml(scope, slot) {
@@ -1057,7 +1057,7 @@
     html += guidanceHtml(operation, card);
     if (card) html += `<div class="tr-card-review"><span>上面的产品说明准确吗？</span><div class="tr-actions">${card.review_state === 'confirmed' ? '<span class="tr-pill confirmed">已确认</span>' : `<button class="tr-accept" data-card-review="confirmed" data-card="${escapeHtml(card.card_id)}">确认产品说明</button>`}<button data-action="show-issue">有误或缺失</button></div></div>`;
     if (state.showIssueForm) html += issueFormHtml(true);
-    if (state.data?.ai_enabled) html += `<button class="tr-primary tr-recheck" data-action="reanalyze">${card ? '重新核对说明' : '立即解读'}</button>`;
+    if (state.data?.ai_enabled) html += `<button class="tr-primary tr-recheck" data-action="reanalyze">${state.data.model_mode === 'conversation' ? '加入待解析队列' : card ? '重新核对说明' : '立即解读'}</button>`;
     html += '<p class="tr-doc-links"><a href="/__tech/documents?name=requirements.generated.md" target="_blank" rel="noopener">查看自动更新的需求文档 ↗</a></p>';
     return html;
   }
@@ -1107,7 +1107,7 @@
       return `<h3 class="tr-card-title">${escapeHtml(spec.title)}</h3>${sourceChangeHtml()}<p class="tr-small">模型初稿 · 待核对</p><p class="tr-lead">${escapeHtml(spec.purpose || '页面用途仍需核对。')}</p>${pageRegionMapHtml(spec)}${displayFieldsHtml()}${functions}${facts('关键状态', spec.states)}${facts('数据来源与去向', spec.data)}${differenceHtml}${questions}`;
     }
     const projectJob = state.data?.project_jobs?.find((item) => item.source_snapshot_id === state.data?.source_snapshot_id && item.pages?.includes(currentPagePath()) && ['queued', 'analyzing', 'validating'].includes(item.status));
-    if (state.data?.ai_enabled && projectJob) return `<h3 class="tr-card-title">${escapeHtml(pageName())}</h3>${sourceChangeHtml()}<div class="tr-update-status">页面说明正在后台补全 · ${escapeHtml(projectJob.stage || '等待生成')}。目前可先按原型查看页面结构并点击功能点。${jobTimingHtml(projectJob)}</div>${observedLayoutHtml()}${displayFieldsHtml()}`;
+    if (state.data?.ai_enabled && projectJob) return `<h3 class="tr-card-title">${escapeHtml(pageName())}</h3>${sourceChangeHtml()}<div class="tr-update-status">${state.data.model_mode === 'conversation' ? '页面说明已排队，等待当前对话处理' : '页面说明正在后台补全'} · ${escapeHtml(projectJob.stage || '等待生成')}。目前可先按原型查看页面结构并点击功能点。${jobTimingHtml(projectJob)}</div>${observedLayoutHtml()}${displayFieldsHtml()}`;
     const failedProjectJob = state.data?.project_jobs?.filter((item) => item.source_snapshot_id === state.data?.source_snapshot_id && item.pages?.includes(currentPagePath()) && item.status === 'failed').at(-1);
     if (state.data?.ai_enabled && failedProjectJob) return `<h3 class="tr-card-title">${escapeHtml(pageName())}</h3>${sourceChangeHtml()}<p class="tr-lead">页面说明生成失败</p><p class="tr-muted">${escapeHtml(failedProjectJob.error || '本批模型解读未完成。')}</p><button class="tr-primary" data-action="retry-page">重试当前页</button>${observedLayoutHtml()}${displayFieldsHtml()}`;
     const pageCards = (state.data?.cards || []).filter((item) => item.source_snapshot_id === state.data?.source_snapshot_id && state.data?.operations?.some((entry) => entry.operation_id === item.operation_id && entry.page_hint === location.pathname));
@@ -1266,12 +1266,12 @@
     const contractDetails = panel.querySelector('details[data-interface-decisions]');
     if (contractDetails) state.expandedContract = contractDetails.open;
     const generatedHere = state.scope === 'page' ? !!currentPageSpec() : !!(operation && currentCard(operation.operation_id));
-    const scanNotice = state.data && !state.data.ai_enabled && !generatedHere && ['product', 'technical'].includes(state.tab) ? `<div class="tr-update-status"><strong>已找到页面与源码线索，完整说明待生成</strong><p>下方是原型中已观察到的事实；业务规则、数据链路与依据仍需模型核对。</p><button class="tr-primary" data-action="enable-model">${state.data.model_consent_reusable ? '生成当前说明' : '启用模型解析并生成当前说明'}</button></div>` : '';
+    const scanNotice = state.data && !state.data.ai_enabled && !generatedHere && ['product', 'technical'].includes(state.tab) ? `<div class="tr-update-status"><strong>已找到页面与源码线索，完整说明待生成</strong><p>下方是原型中已观察到的事实；业务规则、数据链路与依据仍需模型核对。可回到对话调用 Skill 选择解析方式。</p><button class="tr-primary" data-action="enable-model">${state.data.model_consent_reusable ? '用 Codex CLI 生成当前说明' : '授权并启用 Codex CLI 自动解析'}</button></div>` : '';
     body.innerHTML = scanNotice + (state.tab === 'product' ? state.scope === 'page' ? pageOverviewHtml() : productHtml() : state.tab === 'technical' ? state.scope === 'page' ? technicalPageHtml() : technicalHtml() : state.tab === 'evidence' ? evidenceHtml() : reviewCombinedHtml());
     const readyPages = state.data?.page_specs?.filter((item) => item.source_snapshot_id === state.data?.source_snapshot_id).length || 0;
     const pendingPages = state.data?.project_jobs?.filter((item) => item.source_snapshot_id === state.data?.source_snapshot_id && ['queued', 'analyzing', 'validating'].includes(item.status)).reduce((sum, item) => sum + item.pages.length, 0) || 0;
     const savedResults = readyPages || (state.data?.cards || []).some((item) => item.source_snapshot_id === state.data?.source_snapshot_id);
-    panel.querySelector('.tr-counter').textContent = state.localStatus || (state.data?.ai_enabled ? `模型解析项目已启用 · 页面初稿 ${readyPages}${pendingPages ? `，生成中 ${pendingPages}` : ''}` : savedResults ? '本地索引完成 · 查看既有解析结果（本次未解析）' : '本地索引完成 · 完整原型说明尚未生成');
+    panel.querySelector('.tr-counter').textContent = state.localStatus || (state.data?.ai_enabled ? `${state.data.model_mode === 'conversation' ? '当前对话处理' : 'CLI 自动解析'} · 页面初稿 ${readyPages}${pendingPages ? `，${state.data.model_mode === 'conversation' ? '待处理' : '生成中'} ${pendingPages}` : ''}` : savedResults ? '本地索引完成 · 查看既有解析结果（本次未解析）' : '本地索引完成 · 完整原型说明尚未生成');
     updateJobTimers();
   }
   async function postAction(path, data) { try { await api(path, { method: 'POST', body: JSON.stringify(data) }); state.localStatus = ''; await refresh(); } catch (error) { state.localStatus = error.message; render(); } }

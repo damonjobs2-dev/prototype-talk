@@ -167,11 +167,11 @@ export class ReviewStore {
     if (initial) {
       for (const job of this.data.jobs) {
         if (job.status === 'queued') { job.stage = '等待服务恢复'; job.updated_at = stamp(); }
-        else if (['collecting', 'analyzing', 'validating'].includes(job.status)) { job.status = 'failed'; job.error = '本地服务重启，运行中的任务已中断，可重新解读'; job.updated_at = stamp(); }
+        else if (['collecting', 'analyzing', 'validating'].includes(job.status)) { job.status = job.generator === 'conversation' ? 'queued' : 'failed'; job.stage = job.generator === 'conversation' ? '等待当前对话继续' : job.stage; job.error = job.generator === 'conversation' ? '' : '本地服务重启，运行中的任务已中断，可重新解读'; job.updated_at = stamp(); }
       }
       for (const job of this.data.project_jobs) {
         if (job.status === 'queued') { job.stage = '等待服务恢复'; job.updated_at = stamp(); }
-        else if (['analyzing', 'validating'].includes(job.status)) { job.status = 'failed'; job.error = '本地服务重启，运行中的页面任务已中断'; job.updated_at = stamp(); }
+        else if (['analyzing', 'validating'].includes(job.status)) { job.status = job.generator === 'conversation' ? 'queued' : 'failed'; job.stage = job.generator === 'conversation' ? '等待当前对话继续' : job.stage; job.error = job.generator === 'conversation' ? '' : '本地服务重启，运行中的页面任务已中断'; job.updated_at = stamp(); }
       }
     }
     this.save();
@@ -293,7 +293,7 @@ export class ReviewStore {
     for (const page of pages) {
       if (!job.pages.includes(page.path)) continue;
       linkObservedFunctions(page, this.data.operations, this.data.cards, job.source_snapshot_id);
-      this.data.page_specs.push({ ...page, source_snapshot_id: job.source_snapshot_id, job_id: job.job_id, generator: 'codex_cli', version: this.data.page_specs.filter((item) => item.path === page.path).length + 1, created_at: stamp() });
+      this.data.page_specs.push({ ...page, source_snapshot_id: job.source_snapshot_id, job_id: job.job_id, generator: job.generator || 'codex_cli', version: this.data.page_specs.filter((item) => item.path === page.path).length + 1, created_at: stamp() });
     }
     this.writeProjectSpec();
     writeDocuments(this.outputRoot, this.data);

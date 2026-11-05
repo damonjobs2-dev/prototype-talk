@@ -2,10 +2,11 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { ReviewStore } from './store.mjs';
-import { interpret } from './agent.mjs';
-import { interpretProjectBatch, projectPages, progressiveBatches, movePageToFront } from './project-agent.mjs';
+import { interpret, buildOperationEvidencePack, promptFor as operationPromptFor, normalizeOperationResult } from './agent.mjs';
+import { interpretProjectBatch, buildPageEvidencePack, promptFor as pagePromptFor, validateProjectResult, projectPages, progressiveBatches, movePageToFront } from './project-agent.mjs';
 import { buildEvidenceView } from './evidence.mjs';
 import { validateOutputSchema } from './input.mjs';
 import { bundleProjectViewer } from './bundle.mjs';
@@ -13,12 +14,14 @@ import { listFiles } from './scanner.mjs';
 import { expectedMismatch } from './trace-match.mjs';
 import { MODEL_DESTINATION, modelConsentRecord, canReuseModelConsent } from './model-consent.mjs';
 import { acquireServerLock } from './server-lock.mjs';
+import { tokenPath, operationInput, pageInput } from './conversation-bridge.mjs';
+import { validateJsonSchema } from './schema-validation.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const assetDir = path.resolve(scriptDir, '../assets');
 
 function argsFrom(argv) {
-  const args = { port: 4179, noAi: true };
+  const args = { port: 4179, modelMode: 'conversation' };
   for (let index = 0; index < argv.length; index++) {
     const item = argv[index];
     if (item === '--source') args.source = argv[++index];
@@ -26,9 +29,11 @@ function argsFrom(argv) {
     else if (item === '--web-root') args.webRoot = argv[++index];
     else if (item === '--port') args.port = Number(argv[++index]);
     else if (item === '--focus') args.focus = argv[++index];
-    else if (item === '--model-parse' || item === '--ai') args.noAi = false;
-    else if (item === '--index-only' || item === '--no-ai') args.noAi = true;
-    else if (item === '--help') { console.log('用法: node server.mjs --source <Demo目录> [--web-root <已构建页面目录>] [--out <结果目录>] [--port 4179] [--focus 控件名] [--model-parse | --index-only]；JSX 项目默认使用 dist/ 作为浏览器预览，默认只建立本地索引'); process.exit(0); }
+    else if (item === '--model-authorized') args.modelAuthorized = true;
+    else if (item === '--model-parse' || item === '--ai' || item === '--cli-model') args.modelMode = 'cli';
+    else if (item === '--conversation-model') args.modelMode = 'conversation';
+    else if (item === '--index-only' || item === '--no-ai') args.modelMode = 'none';
+    else if (item === '--help') { console.log('用法: node server.mjs --source <Demo目录> [--web-root <已构建页面目录>] [--out <结果目录>] [--port 4179] [--focus 控件名] [--conversation-model | --cli-model | --index-only]；默认由当前对话模型生成，CLI 模式在对话结束后也可自动处理点击'); process.exit(0); }
     else throw new Error(`未知参数：${item}`);
   }
   if (!args.source) throw new Error('需要 --source');
@@ -37,6 +42,7 @@ function argsFrom(argv) {
 }
 
 const args = argsFrom(process.argv.slice(2));
+args.noAi = args.modelMode === 'none';
 const sourceRoot = path.resolve(args.source);
 const hasJsxSource = listFiles(sourceRoot, new Set(['.jsx', '.tsx'])).length > 0;
 const runtimeRoot = args.webRoot ? path.resolve(sourceRoot, args.webRoot) : hasJsxSource ? path.join(sourceRoot, 'dist') : sourceRoot;
@@ -53,7 +59,11 @@ if (!args.noAi) {
 const releaseServerLock = acquireServerLock(path.resolve(args.out || path.join(sourceRoot, 'docs', 'prototype-talk')), args.port);
 process.on('exit', releaseServerLock);
 const store = new ReviewStore(sourceRoot, args.out);
-if (!args.noAi && !canReuseModelConsent(store.data.model_consent, store.sourceRoot)) {
+const conversationToken = crypto.randomBytes(32).toString('hex');
+let conversationTokenFile = '';
+process.on('exit', () => { if (conversationTokenFile) { try { fs.unlinkSync(conversationTokenFile); } catch {} } });
+if (args.modelMode === 'cli' && !args.modelAuthorized && !canReuseModelConsent(store.data.model_consent, store.sourceRoot)) throw new Error('CLI 自动解析需要先明确授权当前项目的源码、PRD、Mock 和操作记录发送至 ChatGPT/Codex；确认后添加 --model-authorized');
+if (args.modelMode === 'cli' && args.modelAuthorized && !canReuseModelConsent(store.data.model_consent, store.sourceRoot)) {
   store.data.model_consent = modelConsentRecord(store.sourceRoot, 'cli_model_parse');
   store.save();
 }
@@ -72,17 +82,17 @@ function enqueue(job) {
     if (job.kind === 'on_demand' || job.kind === 'recheck') queue.unshift(job.job_id);
     else queue.push(job.job_id);
   }
-  if (activeOperations < maxOperationConcurrency) setImmediate(processQueue);
+  if (args.modelMode === 'cli' && activeOperations < maxOperationConcurrency) setImmediate(processQueue);
 }
 
 function enqueueProject(job) {
   if (job?.status === 'queued' && !projectQueue.includes(job.job_id)) projectQueue.push(job.job_id);
-  if (projectActive < maxProjectConcurrency) setImmediate(processProjectQueue);
+  if (args.modelMode === 'cli' && projectActive < maxProjectConcurrency) setImmediate(processProjectQueue);
 }
 
 function prioritizePage(pagePath) {
   const found = movePageToFront(projectQueue, store.data.project_jobs, pagePath);
-  if (projectActive < maxProjectConcurrency) setImmediate(processProjectQueue);
+  if (args.modelMode === 'cli' && projectActive < maxProjectConcurrency) setImmediate(processProjectQueue);
   return found;
 }
 
@@ -227,9 +237,71 @@ const server = http.createServer(async (request, response) => {
     if (listeningPort && ![`127.0.0.1:${listeningPort}`, `localhost:${listeningPort}`].includes(host)) { json(response, 403, { error: '仅允许本机地址' }); return; }
     const origin = String(request.headers.origin || '');
     if (request.method !== 'GET' && origin && ![`http://127.0.0.1:${listeningPort}`, `http://localhost:${listeningPort}`].includes(origin)) { json(response, 403, { error: '来源不匹配' }); return; }
+    if (pathname.startsWith('/__tech/conversation/')) {
+      if (args.modelMode !== 'conversation') { json(response, 409, { error: '当前服务未使用对话模型模式' }); return; }
+      if (request.headers['x-prototype-talk-token'] !== conversationToken) { json(response, 403, { error: '对话任务令牌无效' }); return; }
+      if (pathname === '/__tech/conversation/next' && request.method === 'POST') {
+        syncSource();
+        const current = store.data.source_snapshot_id;
+        const urgentOperation = store.data.jobs.find((item) => item.source_snapshot_id === current && item.status === 'queued' && ['on_demand', 'recheck'].includes(item.kind));
+        const projectJob = projectQueue.map((id) => store.data.project_jobs.find((item) => item.job_id === id)).find((item) => item?.source_snapshot_id === current && item.status === 'queued')
+          || store.data.project_jobs.find((item) => item.source_snapshot_id === current && item.status === 'queued')
+          || store.data.project_jobs.find((item) => item.source_snapshot_id === current && item.status === 'analyzing' && item.generator === 'conversation');
+        const operationJob = urgentOperation || !projectJob && (store.data.jobs.find((item) => item.source_snapshot_id === current && item.status === 'queued')
+          || store.data.jobs.find((item) => item.source_snapshot_id === current && item.status === 'analyzing' && item.generator === 'conversation'));
+        const job = urgentOperation || projectJob || operationJob;
+        if (!job) { json(response, 200, { status: 'idle', queued_pages: 0, queued_operations: 0 }); return; }
+        const isPage = !!job.pages;
+        const type = isPage ? 'page_batch' : 'operation';
+        const evidenceStartedAt = Date.now();
+        const input = isPage ? pageInput(store, job, projectPages(store.sourceRoot)) : operationInput(store, job);
+        const evidence = isPage ? buildPageEvidencePack(input) : buildOperationEvidencePack(input);
+        const evidenceBuildMs = Date.now() - evidenceStartedAt;
+        const extra = !isPage ? `\n\n用户补充：${JSON.stringify(input.supplements.map((item) => ({ id: item.supplement_id, answers: item.answers })))}\n用户确认规则：${JSON.stringify(input.rules.map((item) => ({ id: item.rule_id, scope: item.scope, slot: item.slot, text: item.text })))}` : '';
+        const prompt = (isPage ? pagePromptFor({ evidencePack: evidence }) : operationPromptFor({ evidencePack: evidence })) + extra;
+        const schema = JSON.parse(fs.readFileSync(path.join(scriptDir, isPage ? 'project.schema.json' : 'interpret.schema.json'), 'utf8'));
+        const started = new Date().toISOString();
+        const timing = { status: 'analyzing', stage: '当前对话模型解读中', generator: 'conversation', started_at: started, evidence_hash: evidence.evidence_hash, evidence_build_ms: evidenceBuildMs, evidence_chars: JSON.stringify(evidence).length, prompt_chars: prompt.length, queue_duration_ms: Math.max(0, Date.parse(started) - Date.parse(job.created_at)) };
+        if (isPage) store.updateProjectJob(job.job_id, timing);
+        else store.updateJob(job.job_id, timing);
+        json(response, 200, { status: 'claimed', job_id: job.job_id, type, source_snapshot_id: current, evidence_hash: evidence.evidence_hash, prompt, schema });
+        return;
+      }
+      if (pathname === '/__tech/conversation/submit' && request.method === 'POST') {
+        syncSource();
+        const input = await readBody(request);
+        const job = [...store.data.project_jobs, ...store.data.jobs].find((item) => item.job_id === input.job_id);
+        if (!job || job.status !== 'analyzing' || job.generator !== 'conversation') { json(response, 409, { error: '任务不存在或未由当前对话领取' }); return; }
+        if (job.source_snapshot_id !== store.data.source_snapshot_id || input.source_snapshot_id !== job.source_snapshot_id || input.evidence_hash !== job.evidence_hash) {
+          (job.pages ? store.updateProjectJob : store.updateJob).call(store, job.job_id, { status: 'stale', stage: '原型或证据已变化', error: '请重新领取任务' });
+          json(response, 409, { error: '原型或证据已变化，请重新领取任务' }); return;
+        }
+        const result = input.result;
+        const resultSchema = JSON.parse(fs.readFileSync(path.join(scriptDir, job.pages ? 'project.schema.json' : 'interpret.schema.json'), 'utf8'));
+        const schemaErrors = validateJsonSchema(result, resultSchema);
+        if (schemaErrors.length) { json(response, 422, { error: `模型输出格式不符：${schemaErrors.join('；')}` }); return; }
+        const duration = Math.max(0, Date.now() - Date.parse(job.started_at));
+        if (job.pages) {
+          const pages = validateProjectResult(store.sourceRoot, job.pages, store.data.operations, result);
+          if (pages.some((page) => !page.purpose || !page.evidence.length || !page.layout.length && !page.functions.length && !page.data.length)) { json(response, 422, { error: '页面结果缺少可核对的用途、正文说明或文件行号依据' }); return; }
+          store.updateProjectJob(job.job_id, { model_duration_ms: duration, duration_ms: duration });
+          store.addProjectResult(job, pages);
+          json(response, 200, { status: 'returned', job_id: job.job_id, pages: pages.map((page) => page.path) });
+        } else {
+          const normalized = normalizeOperationResult(result);
+          const supported = [...normalized.claims, ...normalized.expected_effects].some((item) => item.origin !== 'proposed' && item.evidence?.length);
+          if (!normalized.summary?.trim() || !supported) { json(response, 422, { error: '操作说明缺少摘要或带依据的可核对结论' }); return; }
+          store.updateJob(job.job_id, { model_duration_ms: duration, duration_ms: duration });
+          const { card } = store.addResult(job, normalized);
+          json(response, 200, { status: 'returned', job_id: job.job_id, card_id: card.card_id });
+        }
+        return;
+      }
+      json(response, 404, { error: '未知对话任务接口' }); return;
+    }
     if (pathname === '/__tech/state' && request.method === 'GET') {
       if (url.searchParams.get('since') === store.data.updated_at) json(response, 200, { unchanged: true, updated_at: store.data.updated_at });
-      else json(response, 200, { ...store.publicState(), ai_enabled: !args.noAi, model_consent_reusable: canReuseModelConsent(store.data.model_consent, store.sourceRoot), output_directory: store.outputRoot, model_destination: `ChatGPT/Codex（${process.env.TECH_PROTOTYPE_TRANSPORT === 'default' ? 'CLI 默认传输' : 'HTTPS：chatgpt.com/backend-api/codex'}；${process.env.TECH_PROTOTYPE_MODEL || 'CLI 默认模型'}）` });
+      else json(response, 200, { ...store.publicState(), ai_enabled: !args.noAi, model_mode: args.modelMode, model_consent_reusable: canReuseModelConsent(store.data.model_consent, store.sourceRoot), output_directory: store.outputRoot, model_destination: args.modelMode === 'conversation' ? '当前对话模型' : `ChatGPT/Codex（${process.env.TECH_PROTOTYPE_TRANSPORT === 'default' ? 'CLI 默认传输' : 'HTTPS：chatgpt.com/backend-api/codex'}；${process.env.TECH_PROTOTYPE_MODEL || 'CLI 默认模型'}）` });
       return;
     }
     if (pathname === '/__tech/model-mode' && request.method === 'POST') {
@@ -246,6 +318,7 @@ const server = http.createServer(async (request, response) => {
       const problems = ['interpret.schema.json', 'project.schema.json'].flatMap((name) => validateOutputSchema(path.join(scriptDir, name)));
       if (problems.length) { json(response, 409, { error: `模型输出格式检查未通过：${problems.join('；')}` }); return; }
       args.noAi = false;
+      args.modelMode = 'cli';
       if (!reusedConsent) {
         store.data.model_consent = modelConsentRecord(store.sourceRoot, 'local_viewer');
         store.save();
@@ -346,6 +419,7 @@ const server = http.createServer(async (request, response) => {
 
 server.listen(args.port, '127.0.0.1', () => {
   const address = server.address();
+  if (args.modelMode === 'conversation') { conversationTokenFile = tokenPath(sourceRoot, address.port); fs.writeFileSync(conversationTokenFile, conversationToken, { mode: 0o600 }); }
   console.log(`请在此地址查看 Prototype Talk 原型说明：http://127.0.0.1:${address.port}/`);
   if (hasJsxSource) console.log('项目自己的 Vite 开发地址只显示原 Demo，不加载 Prototype Talk 说明窗。');
   console.log(`扫描：${store.data.scan_summary.operation_count} 个控件候选，${store.data.scan_summary.scanned_files} 个资料文件`);
@@ -362,6 +436,7 @@ server.listen(args.port, '127.0.0.1', () => {
     for (const batch of batches.slice(1)) enqueueProject(store.createProjectJob(batch));
     for (const job of store.data.jobs.filter((item) => item.status === 'queued' && item.source_snapshot_id === store.data.source_snapshot_id)) enqueue(job);
     console.log(`首轮页面解读：${pages.length} 个页面，${projectQueue.length} 批待生成`);
+    if (args.modelMode === 'conversation') console.log(`当前对话任务：node scripts/conversation-task.mjs next --source '${sourceRoot}' --port ${address.port}`);
   }
   if (args.noAi) console.log('本地索引完成；模型解析项目未运行，新的完整原型说明尚未生成。');
   if (args.focus && args.noAi) console.log('已记录重点控件；该控件尚未生成新的完整说明。');

@@ -256,6 +256,10 @@ export async function interpret(input, { timeoutMs = 240000, onStage = () => {},
   let parsed;
   try { parsed = JSON.parse(output.trim()); }
   catch { throw new Error(`模型返回不是 JSON：${output.slice(0, 350)}`); }
+  return normalizeOperationResult(parsed);
+}
+
+export function normalizeOperationResult(parsed) {
   if (!parsed || typeof parsed.title !== 'string' || !Array.isArray(parsed.claims) || !Array.isArray(parsed.issues)) throw new Error('模型返回缺少必要字段');
   const pageEvidence = Array.isArray(parsed.page_context?.evidence) ? parsed.page_context.evidence.filter((item) => typeof item === 'string' && item.trim()).slice(0, 5) : [];
   parsed.page_context = { purpose: pageEvidence.length ? String(parsed.page_context?.purpose || '').slice(0, 180) : '', layout: pageEvidence.length ? String(parsed.page_context?.layout || '').slice(0, 220) : '', evidence: pageEvidence };
