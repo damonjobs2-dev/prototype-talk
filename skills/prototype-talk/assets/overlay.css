@@ -1,0 +1,252 @@
+#tech-review-panel{position:fixed;top:18px;right:18px;width:min(450px,calc(100vw - 24px));max-height:min(80vh,780px);z-index:2147483000;display:flex;flex-direction:column;background:#fbfaf7;color:#16212a;border:1px solid #27323b;border-radius:12px;overflow:hidden;box-shadow:0 12px 34px rgba(0,0,0,.22);font:13px/1.45 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;text-align:left;box-sizing:border-box}
+#tech-review-panel *{box-sizing:border-box}
+#tech-review-panel button,#tech-review-panel textarea,#tech-review-panel input,#tech-review-panel select{font:inherit}
+#tech-review-panel button{cursor:pointer}
+#tech-review-panel .tr-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#17212b;color:#fff;cursor:move;user-select:none;touch-action:none;flex:none}
+#tech-review-panel .tr-title{font-weight:700;letter-spacing:.02em;flex:1}
+#tech-review-panel .tr-title small{font-size:11px;font-weight:400;color:#c8d3df;margin-left:6px}
+#tech-review-panel .tr-head button{border:1px solid #7c8b97;background:transparent;color:#fff;padding:2px 7px;border-radius:2px}
+#tech-review-panel .tr-context{display:flex;align-items:center;gap:5px;padding:7px 12px 6px;background:#fff;color:#435669;font-size:11px;line-height:1.4;border-bottom:1px solid #e1e6e9;white-space:nowrap;overflow:hidden;flex:none}
+#tech-review-panel .tr-context button{min-width:0;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:0;background:transparent;color:#536b7e;padding:2px 3px;border-radius:4px;text-align:left}
+#tech-review-panel .tr-context button[aria-current="page"]{background:#e8f0fa;color:#174a80;font-weight:700}
+#tech-review-panel .tr-context span{color:#8a9aa5}
+#tech-review-panel .tr-tabs{display:flex;gap:0;background:#e9edf1;border-bottom:1px solid #cfd9e1;flex:none}
+#tech-review-panel .tr-tabs button{flex:1;border:0;border-right:1px solid #d7dfe5;border-bottom:2px solid transparent;background:transparent;padding:9px 4px 7px;color:#445666;font-weight:600}
+#tech-review-panel .tr-tabs button[aria-selected="true"]{background:#fff;border-bottom-color:#2665aa;color:#123f70}
+#tech-review-panel .tr-tabs button{font-size:12px;white-space:nowrap}
+#tech-review-panel .tr-evidence-card{margin:11px 0;padding:10px;border:1px solid #d7e2e9;border-radius:9px;background:#fff}
+#tech-review-panel .tr-evidence-card-head{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+#tech-review-panel .tr-evidence-card-head h4{width:100%;margin:0;color:#193c56;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+#tech-review-panel .tr-evidence-card-head span{max-width:100%;font-size:10px;color:#815821;background:#fff3dd;border-radius:10px;padding:3px 7px;overflow-wrap:anywhere}
+#tech-review-panel .tr-evidence-lane{margin-top:9px;padding-top:8px;border-top:1px solid #e5ebef}
+#tech-review-panel .tr-evidence-lane h5{margin:0 0 5px;color:#285373;font-size:11px}
+#tech-review-panel .tr-evidence-lane p{margin:3px 0;font-size:11px}
+#tech-review-panel .tr-evidence-source{margin:5px 0;padding:6px 7px;background:#f4f8fb;border-radius:5px}
+#tech-review-panel .tr-evidence-locations{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px}
+#tech-review-panel .tr-evidence-locations span{font-size:10px;color:#34658b;overflow-wrap:anywhere}
+#tech-review-panel .tr-evidence-source pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;max-height:130px;overflow:auto;font:10px/1.5 ui-monospace,SFMono-Regular,monospace;color:#243944}
+#tech-review-panel .tr-body{overflow:auto;padding:12px;min-height:120px;overscroll-behavior:contain}
+#tech-review-panel .tr-muted{color:#646b6e}
+#tech-review-panel .tr-small{font-size:11px;color:#62696c}
+#tech-review-panel .tr-card-title{font-weight:700;font-size:18px;line-height:1.35;margin:0 0 10px;color:#152c3c}
+#tech-review-panel .tr-card-title span{font-size:12px;color:#66747e;font-weight:600;vertical-align:2px;margin-right:3px}
+#tech-review-panel .tr-lead{font-size:14px;line-height:1.55;color:#1c3448;background:#edf4f9;border-left:3px solid #3471c3;padding:9px 10px;margin:0 0 12px;border-radius:0 5px 5px 0}
+#tech-review-panel .tr-element-heading{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+#tech-review-panel .tr-element-heading>div{flex:1;min-width:0}
+#tech-review-panel .tr-element-heading .tr-card-title{margin:2px 0 0}
+#tech-review-panel .tr-element-heading>button{border:1px solid #b7c9d8;background:#fff;border-radius:5px;color:#285c84;padding:4px 8px;font-size:11px}
+#tech-review-panel .tr-eyebrow{font-size:11px;color:#647987;font-weight:600}
+#tech-review-panel .tr-focus-card{border:1px solid #d6e1e9;background:#fff;border-radius:9px;padding:9px 11px;margin:11px 0}
+#tech-review-panel .tr-focus-card h4,#tech-review-panel .tr-tech-section h4{margin:0 0 4px;font-size:12px;color:#1f435d}
+#tech-review-panel .tr-focus-row{display:grid;grid-template-columns:82px 1fr;column-gap:8px;align-items:start;padding:7px 0;border-top:1px solid #e9eef1}
+#tech-review-panel .tr-focus-row span{font-size:11px;color:#667a86}
+#tech-review-panel .tr-focus-row strong{font-size:12px;line-height:1.45;color:#193347;font-weight:650;overflow-wrap:anywhere}
+#tech-review-panel .tr-focus-row small{grid-column:2;color:#84929a;font-size:10px;margin-top:2px}
+#tech-review-panel .tr-row-actions{grid-column:2;display:flex;gap:5px;margin-top:4px}
+#tech-review-panel .tr-row-actions button,#tech-review-panel .tr-rule-item button{border:0;background:transparent;color:#275b99;padding:1px 3px;font-size:11px;text-decoration:underline;text-underline-offset:2px}
+#tech-review-panel .tr-rule-editor{margin:5px 0 10px;padding:9px;background:#f1f6fc;border:1px solid #c7daed;border-radius:7px}
+#tech-review-panel .tr-rule-editor label{display:block;margin-top:6px;font-size:11px;font-weight:650;color:#244767}
+#tech-review-panel .tr-rule-editor textarea{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:7px;border:1px solid #a7bfd1;border-radius:5px;background:#fff;color:#193347;font:inherit;resize:vertical}
+#tech-review-panel .tr-rule-item{display:flex;justify-content:space-between;gap:8px;align-items:start;padding:7px 0;border-top:1px solid #e3ebf1}
+#tech-review-panel .tr-rule-item div{min-width:0;flex:1}
+#tech-review-panel .tr-rule-item span{display:block;font-size:10px;color:#71828d}
+#tech-review-panel .tr-rule-item strong{display:block;font-size:12px;color:#193347;overflow-wrap:anywhere;white-space:pre-wrap}
+#tech-review-panel .tr-doc-links{font-size:11px;margin:10px 0}
+#tech-review-panel .tr-doc-links a{color:#1b57a2;text-decoration:underline}
+#tech-review-panel .tr-decision{margin:12px 0;padding:11px;border:1px solid #bdd2e4;background:#f2f7fb;border-radius:9px}
+#tech-review-panel .tr-decision-kicker{font-size:10px;font-weight:700;color:#356e9c;margin-bottom:3px}
+#tech-review-panel .tr-decision h4{font-size:13px;line-height:1.4;margin:0 0 9px;color:#1c394d}
+#tech-review-panel .tr-decision-context{margin:3px 0 8px;color:#4f697b;font-size:11px;line-height:1.45}
+#tech-review-panel .tr-answer-options{display:flex;flex-wrap:wrap;gap:6px}
+#tech-review-panel .tr-answer-options button{padding:5px 8px;background:#fff;border:1px solid #aebfca;border-radius:6px;color:#25485f;font-size:12px}
+#tech-review-panel .tr-answer-options button:hover{border-color:#3375af;background:#e7f1fa}
+#tech-review-panel .tr-answer-input{display:flex;gap:6px}
+#tech-review-panel .tr-answer-input input{min-width:0;flex:1;border:1px solid #b6c5cf;border-radius:5px;padding:7px;color:#183040;background:#fff}
+#tech-review-panel .tr-answer-input button,#tech-review-panel .tr-decision .tr-actions button{border:1px solid #8da9bd;border-radius:5px;background:#fff;color:#194568;padding:5px 8px}
+#tech-review-panel .tr-decision-selected{display:grid;grid-template-columns:65px 1fr;gap:6px;padding:7px 8px;background:#fff;border-radius:5px}
+#tech-review-panel .tr-decision-selected span{font-size:11px;color:#647987}
+#tech-review-panel .tr-decision-selected strong{font-size:12px;color:#193347}
+#tech-review-panel .tr-skip{border:0;background:transparent;color:#607889;font-size:11px;text-decoration:underline;padding:6px 0 0}
+#tech-review-panel .tr-card-review{margin:13px 0 8px;padding-top:10px;border-top:1px solid #dce4e8}
+#tech-review-panel .tr-todo-link{display:block;width:100%;border:1px solid #e4c988;border-radius:6px;background:#fff8e9;color:#775719;text-align:left;padding:7px 9px;font-size:11px;font-weight:700;margin:7px 0}
+#tech-review-panel .tr-card-review>span{font-size:11px;color:#607681;font-weight:700}
+#tech-review-panel .tr-tech-section{margin:11px 0;padding:11px;background:#fff;border:1px solid #e0e8ed;border-radius:8px}
+#tech-review-panel .tr-goal{border-left:3px solid #3471c3}
+#tech-review-panel .tr-contract{border-color:#b8d1e9;background:#f8fbff}
+#tech-review-panel .tr-contract-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px}
+#tech-review-panel .tr-contract-head h4{margin:0;color:#194b75;font-size:13px}
+#tech-review-panel .tr-contract-head span{flex:none;border-radius:99px;background:#e5effc;color:#245b8c;padding:3px 7px;font-size:10px;font-weight:700}
+#tech-review-panel .tr-contract>.tr-reading-rows{margin-bottom:10px}
+#tech-review-panel .tr-contract>.tr-api-fields{padding-top:8px;border-top:1px solid #d7e6f1}
+#tech-review-panel .tr-contract>.tr-api-fields>h5:first-child{margin-top:0;font-size:12px}
+#tech-review-panel .tr-contract-decisions{margin-top:11px;padding-top:8px;border-top:1px solid #d7e6f1}
+#tech-review-panel .tr-contract-decisions>summary{color:#245b8c;font-size:11px;font-weight:700;cursor:pointer}
+#tech-review-panel .tr-contract-rule-list{padding:7px 0 0}
+#tech-review-panel .tr-contract-fields{margin-top:9px;border-top:1px solid #d7e6f1}
+#tech-review-panel .tr-contract-fields>strong{display:block;padding:7px 0 3px;color:#214b68;font-size:11px}
+#tech-review-panel .tr-contract-fields>div{display:grid;grid-template-columns:minmax(90px,1fr) 50px;gap:2px 8px;padding:6px 0;border-top:1px solid #e2ecf3}
+#tech-review-panel .tr-contract-fields span{font-size:12px;font-weight:650;color:#18384c}
+#tech-review-panel .tr-contract-fields em{font-size:10px;font-style:normal;color:#406a84;text-align:right}
+#tech-review-panel .tr-contract-fields small{grid-column:1/-1;font-size:10px;color:#687d8c}
+#tech-review-panel .tr-contract-pending{display:grid;gap:3px;margin-top:9px;padding:8px;border-radius:6px;background:#fff5e8;color:#725220;font-size:11px}
+#tech-review-panel .tr-contract-pending strong{font-size:11px}
+#tech-review-panel .tr-tech-group-title{margin:16px 0 7px;padding:0 0 4px;border-bottom:2px solid #d8e7f3;color:#1b5179;font-size:12px;font-weight:750}
+#tech-review-panel .tr-tech-section p{margin:4px 0;line-height:1.55}
+#tech-review-panel .tr-tech-section small{font-size:10px;color:#7a8992}
+#tech-review-panel .tr-tech-steps{padding-left:20px;margin:5px 0}
+#tech-review-panel .tr-tech-steps li{margin:5px 0}
+#tech-review-panel .tr-review-summary{display:flex;gap:8px}
+#tech-review-panel .tr-review-summary span{flex:1;padding:7px;background:#edf3f7;border-radius:6px;color:#49697f;text-align:center;font-size:11px}
+#tech-review-panel .tr-review-summary strong{font-size:16px;color:#173f61;margin-right:2px}
+#tech-review-panel .tr-review-fact{border-top:1px solid #e5ecf0;padding:7px 0}
+#tech-review-panel .tr-review-fact strong,#tech-review-panel .tr-review-fact small{display:block}
+#tech-review-panel .tr-review-fact small{color:#73848e;margin-top:3px}
+#tech-review-panel .tr-page-hint{font-size:11px;line-height:1.5;color:#526672;margin:2px 0 10px}
+#tech-review-panel .tr-page-hint button{border:0;background:transparent;color:#205ea5;text-decoration:underline;padding:0 2px}
+#tech-review-panel .tr-reading-section{margin:12px 0 0;padding-top:9px;border-top:1px solid #dce2e5}
+#tech-review-panel .tr-reading-section h4{font-size:12px;font-weight:700;color:#254256;margin:0 0 7px}
+#tech-review-panel .tr-reading-section p{margin:5px 0;line-height:1.5}
+#tech-review-panel .tr-region-map{display:grid;gap:6px}
+#tech-review-panel .tr-region-map>div{display:grid;grid-template-columns:62px 1fr;gap:8px;padding:8px 9px;background:#fff;border:1px solid #e0e8ed;border-radius:6px}
+#tech-review-panel .tr-region-map span{font-size:11px;color:#2d6895;font-weight:700}
+#tech-review-panel .tr-region-map strong{font-size:12px;color:#253e4e;font-weight:500}
+#tech-review-panel .tr-task-chips{display:flex;gap:6px;flex-wrap:wrap}
+#tech-review-panel .tr-task-chips span{padding:4px 8px;border-radius:999px;background:#e7f0fa;color:#215785;font-size:11px;font-weight:650}
+#tech-review-panel .tr-reading-rows>div{display:grid;grid-template-columns:70px 1fr;gap:7px;padding:5px 0;border-bottom:1px solid #e8ecee}
+#tech-review-panel .tr-reading-rows span{font-size:11px;color:#61727b}
+#tech-review-panel .tr-reading-rows strong{font-size:12px;font-weight:600;color:#203c4e;overflow-wrap:anywhere}
+#tech-review-panel .tr-prd-block{padding:8px 0;border-bottom:1px solid #e6ecef}
+#tech-review-panel .tr-prd-block:last-child{border-bottom:0}
+#tech-review-panel .tr-prd-block strong{display:block;color:#24445e;font-size:12px}
+#tech-review-panel .tr-prd-block p{margin:4px 0;color:#263f50;font-size:12px;line-height:1.55}
+#tech-review-panel .tr-prd-block>span{font-size:10px;color:#71818b}
+#tech-review-panel .tr-next-links{display:flex;gap:8px;margin:15px 0 4px}
+#tech-review-panel .tr-next-links button{border:1px solid #b8cbd9;border-radius:5px;background:#fff;color:#225985;padding:6px 9px}
+#tech-review-panel .tr-fact-list{list-style:none;margin:0;padding:0}
+#tech-review-panel .tr-fact-list li{padding:6px 0;border-bottom:1px solid #e9edee;line-height:1.5;color:#203240}
+#tech-review-panel .tr-fact-list li:last-child{border-bottom:0}
+#tech-review-panel .tr-fact-meta{display:block;font-size:10px;color:#697b85;margin-top:2px}
+#tech-review-panel .tr-result-row{padding:6px 0;border-bottom:1px solid #e9edee;line-height:1.5}
+#tech-review-panel .tr-result-row strong{display:block;color:#1c3f5e}
+#tech-review-panel .tr-update-status{background:#eef3fc;color:#23518c;padding:6px 8px;border-radius:5px;margin:8px 0;font-size:12px}
+#tech-review-panel .tr-job-timing{display:block;margin-top:4px;font-size:11px;font-variant-numeric:tabular-nums;color:#526578}
+#tech-review-panel .tr-generation-time{margin:4px 0 10px;color:#66717a;font-size:11px}
+#tech-review-panel .tr-generation-time .tr-job-timing{display:inline;margin:0 0 0 6px}
+#tech-review-panel .tr-source-facts{background:#f0f5f8;border:1px solid #d3e0e7;border-radius:7px;padding:9px 10px;margin:9px 0}
+#tech-review-panel .tr-source-heading{font-size:11px;font-weight:700;color:#315a70;margin-bottom:6px}
+#tech-review-panel .tr-source-facts>div:not(.tr-source-heading){display:grid;grid-template-columns:72px 1fr;gap:6px;padding:5px 0;border-top:1px solid #dce6ea}
+#tech-review-panel .tr-source-facts>div>span{font-size:11px;color:#60747c}
+#tech-review-panel .tr-source-facts>div>strong{font-size:12px;color:#173342;line-height:1.4;overflow-wrap:anywhere}
+#tech-review-panel .tr-source-facts>div>strong small{display:block;font-size:10px;font-weight:400;color:#60747c}
+#tech-review-panel .tr-saved-answers{background:#f0f5f8;border-radius:5px;padding:4px 8px;margin:2px 0 8px}
+#tech-review-panel .tr-saved-answers>div{padding:4px 0;border-bottom:1px solid #dce6ea}
+#tech-review-panel .tr-saved-answers>div:last-child{border-bottom:0}
+#tech-review-panel .tr-saved-answers span{display:block;font-size:11px;color:#60747c}
+#tech-review-panel .tr-saved-answers strong{display:block;font-size:12px;color:#173342;overflow-wrap:anywhere}
+#tech-review-panel .tr-saved-answers small{font-size:10px;font-weight:400;color:#60747c}
+#tech-review-panel .tr-source-supplement{border-top:1px solid #dce6ea;padding-top:6px}
+#tech-review-panel .tr-source-supplement .tr-muted{font-size:11px;margin:5px 0}
+#tech-review-panel .tr-source-note{margin:7px 0}
+#tech-review-panel .tr-review-tabs{display:flex;gap:4px;border-bottom:1px solid #d8dedf;margin-bottom:3px}
+#tech-review-panel .tr-review-tabs button{flex:1;border:0;border-bottom:2px solid transparent;background:transparent;padding:7px 2px;color:#53616b;font-size:12px}
+#tech-review-panel .tr-review-tabs button[aria-selected="true"]{border-bottom-color:#2258bd;color:#123c83;font-weight:700}
+#tech-review-panel .tr-review-tabs b{font-weight:700;font-size:11px;margin-left:2px}
+#tech-review-panel .tr-claim{padding:10px 0;border-bottom:1px solid #e2e5e3}
+#tech-review-panel .tr-claim p{margin:4px 0;white-space:pre-wrap}
+#tech-review-panel .tr-claim-head{display:flex;gap:7px;align-items:flex-start}
+#tech-review-panel .tr-claim-head strong{font-size:13px;line-height:1.45;color:#172934;flex:1}
+#tech-review-panel .tr-origin{font-size:10px;color:#6d767a}
+#tech-review-panel .tr-pill{display:inline-block;background:#e2e6e7;color:#2b414b;padding:1px 5px;font-size:10px;border-radius:2px}
+#tech-review-panel .tr-pill.pending{background:#fff1ca;color:#6b4d00}
+#tech-review-panel .tr-pill.confirmed{background:#d8f1df;color:#165332}
+#tech-review-panel .tr-pill.rejected{background:#f7d9d5;color:#7b2e2e}
+#tech-review-panel .tr-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+#tech-review-panel .tr-actions button,#tech-review-panel .tr-primary{border:1px solid #8396a5;background:#fff;color:#1b344b;padding:4px 8px;border-radius:5px}
+#tech-review-panel .tr-actions .tr-accept{background:#e9f5ec;border-color:#8fb69a;color:#165332}
+#tech-review-panel .tr-actions button:hover,#tech-review-panel .tr-primary:hover{background:#e8eef8}
+#tech-review-panel button:focus-visible,#tech-review-panel input:focus-visible,#tech-review-panel select:focus-visible,#tech-review-panel textarea:focus-visible,#tech-review-panel summary:focus-visible{outline:2px solid #2258bd;outline-offset:2px}
+#tech-review-panel .tr-evidence{font-size:11px;color:#5c686d;word-break:break-all;margin-top:4px}
+#tech-review-panel .tr-detail-text{font-size:12px;color:#334b5d;line-height:1.5;margin-top:5px}
+#tech-review-panel .tr-evidence-detail{font-size:11px;color:#506678;margin-top:5px}
+#tech-review-panel .tr-evidence-detail summary{cursor:pointer;list-style:none;text-decoration:underline;text-underline-offset:2px}
+#tech-review-panel .tr-evidence-detail summary::-webkit-details-marker{display:none}
+#tech-review-panel .tr-detail-group{margin-top:12px;border:1px solid #d8dedf;border-radius:7px;padding:0 9px 9px;background:#fff}
+#tech-review-panel .tr-detail-group>summary{cursor:pointer;padding:8px 0;font-weight:700;color:#234053}
+#tech-review-panel .tr-detail-group>summary span{float:right;color:#61727a}
+#tech-review-panel .tr-effect,#tech-review-panel .tr-issue{padding:8px 0;border-top:1px solid #e3e7e8}
+#tech-review-panel .tr-effect strong{display:block;color:#173c60}
+#tech-review-panel .tr-effect>span{display:block;margin:2px 0}
+#tech-review-panel .tr-issue p{margin:0 0 4px;font-weight:600}
+#tech-review-panel .tr-mismatch{margin:8px 0;padding:11px;border:1px solid #e6c88b;border-radius:8px;background:#fffaf0}
+#tech-review-panel .tr-mismatch>strong{display:block;margin-bottom:8px;color:#7b4b10}
+#tech-review-panel .tr-diff-row{display:grid;grid-template-columns:72px 1fr;gap:8px;margin:7px 0}
+#tech-review-panel .tr-diff-row span{font-size:11px;color:#805e31}
+#tech-review-panel .tr-diff-row p{margin:0;font-size:12px;font-weight:500;line-height:1.5}
+#tech-review-panel .tr-mismatch>small{display:block;margin:8px 0;color:#816c50}
+#tech-review-panel .tr-quality-alert{border:1px solid #e7bf98;background:#fff8f2}
+#tech-review-panel .tr-quality-alert p{margin:6px 0;font-size:12px;color:#804723}
+#tech-review-panel .tr-empty{padding:14px 0;color:#6a7378;text-align:center}
+#tech-review-panel .tr-question{display:block;margin:8px 0}
+#tech-review-panel .tr-question span{display:block;font-size:12px;font-weight:600;color:#334957;margin-bottom:4px}
+#tech-review-panel .tr-question input,#tech-review-panel .tr-question select{width:100%;border:1px solid #b7c3c9;border-radius:5px;padding:7px;background:#fff;color:#183040}
+#tech-review-panel .tr-question input::placeholder{color:#7d8b94}
+#tech-review-panel .tr-inline-error{color:#a13d2f;font-size:11px;margin:5px 0}
+#tech-review-panel .tr-guidance .tr-muted{font-size:11px;margin:0 0 8px}
+#tech-review-panel .tr-recheck{margin-top:10px}
+#tech-review-panel .tr-provenance{border:0;background:transparent;padding:0}
+#tech-review-panel .tr-provenance>summary{font-size:11px;font-weight:400;color:#69777d}
+#tech-review-panel .tr-list-intro strong{font-size:14px;color:#193346}
+#tech-review-panel .tr-list-intro p{font-size:11px;color:#61727a;margin:5px 0 8px}
+#tech-review-panel .tr-scope{display:flex;gap:4px;margin:8px 0}
+#tech-review-panel .tr-scope button{border:1px solid #b7c5cc;background:#fff;padding:5px 10px;border-radius:5px;color:#345064}
+#tech-review-panel .tr-scope button[aria-pressed="true"]{background:#e7effb;border-color:#7899c7;color:#15458a;font-weight:700}
+#tech-review-panel .tr-coverage-stats{display:flex;gap:5px;margin:8px 0}
+#tech-review-panel .tr-coverage-stats span{flex:1;padding:6px 3px;background:#edf3f7;border-radius:5px;color:#567083;font-size:10px;text-align:center}
+#tech-review-panel .tr-coverage-stats strong{display:block;color:#173f61;font-size:15px}
+#tech-review-panel .tr-list{list-style:none;margin:0;padding:0}
+#tech-review-panel .tr-list li{border-bottom:1px solid #dedbd3}
+#tech-review-panel .tr-list button{width:100%;border:0;background:transparent;text-align:left;padding:7px 2px;color:#1e3444}
+#tech-review-panel .tr-list button span{display:block}
+#tech-review-panel .tr-list button strong{display:block;font-weight:600}
+#tech-review-panel .tr-list button:hover{background:#edf0f1}
+#tech-review-panel .tr-search{width:100%;border:1px solid #a7aaa8;background:#fff;padding:6px;margin:5px 0 8px;color:#14252c}
+#tech-review-panel .tr-counter{padding:5px 10px;border-top:1px solid #dedbd3;background:#f2f0ea;color:#586064;font-size:11px;flex:none}
+#tech-review-panel.tr-collapsed{width:230px;max-height:none}
+#tech-review-panel.tr-collapsed .tr-context,#tech-review-panel.tr-collapsed .tr-tabs,#tech-review-panel.tr-collapsed .tr-body,#tech-review-panel.tr-collapsed .tr-counter{display:none}
+@media(min-width:900px){#tech-review-panel{top:auto;bottom:18px;max-height:min(80vh,780px)}}
+@media(max-width:899px){#tech-review-panel{top:auto;bottom:8px;right:8px;max-height:min(48vh,420px)}}
+@media(max-width:520px){#tech-review-panel{width:min(360px,calc(100vw - 16px))}}
+@media(prefers-reduced-motion:no-preference){#tech-review-panel button{transition:background-color .18s,color .18s}}
+.tr-target-flash{outline:3px solid #2b77d0!important;outline-offset:4px!important;box-shadow:0 0 0 7px rgba(43,119,208,.2)!important}
+#tech-review-panel .tr-source-sync{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;margin:7px 0;background:#eef4f8;border-left:3px solid #4779ad;border-radius:4px;color:#31516d;font-size:11px;line-height:1.5}
+#tech-review-panel .tr-source-sync span{flex:1}
+#tech-review-panel .tr-source-sync button{flex:none;border:1px solid #9db6cc;background:#fff;border-radius:4px;padding:2px 6px;color:#23528a}
+#tech-review-panel .tr-field-grid{display:grid;gap:5px;max-height:300px;overflow:auto}
+#tech-review-panel .tr-field-row{border:1px solid #e0e8ec;border-radius:5px;padding:6px 8px;background:#fcfdfd}
+#tech-review-panel .tr-field-row strong{display:block;color:#183c55;font-size:12px}
+#tech-review-panel .tr-field-row span,#tech-review-panel .tr-field-row small{display:block;color:#657984;font-size:10px;line-height:1.45}
+#tech-review-panel .tr-api-head,#tech-review-panel .tr-api-main{display:grid;grid-template-columns:30% 24% 1fr;gap:6px;align-items:start}
+#tech-review-panel .tr-api-head{font-weight:700;color:#557080;font-size:10px;padding:5px 4px;border-bottom:1px solid #cfdee5}
+#tech-review-panel .tr-api-row{padding:7px 4px;border-bottom:1px solid #e2e9ec}
+#tech-review-panel .tr-api-fields>h5{margin:12px 0 5px;color:#214a65;font-size:11px}
+#tech-review-panel .tr-api-fixed{background:#f5f9fc;border-left:2px solid #80a9c9;padding-left:7px}
+#tech-review-panel .tr-api-fixed{position:relative;padding-right:29px}
+#tech-review-panel .tr-api-fixed:hover{background:#eef5fa}
+#tech-review-panel .tr-api-inline-edit{position:absolute;right:5px;top:5px;width:23px;height:23px;padding:0;border:0;border-radius:4px;background:transparent;color:#68839a;font-size:15px;line-height:1;opacity:.55}
+#tech-review-panel .tr-api-fixed:hover .tr-api-inline-edit,#tech-review-panel .tr-api-inline-edit:focus-visible{opacity:1;background:#e0edf6;color:#174f7a}
+#tech-review-panel .tr-api-key-pending{color:#7c8c98!important;font-style:italic}
+#tech-review-panel .tr-api-group{border-left:2px solid #80a9c9;border-bottom:1px solid #e2e9ec;background:#f5f9fc;padding:7px 8px}
+#tech-review-panel .tr-api-group-main code,#tech-review-panel .tr-api-group-main strong,#tech-review-panel .tr-api-group-main span{font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+#tech-review-panel .tr-api-group-main code{color:#6c8292}
+#tech-review-panel .tr-api-group details{margin-top:4px}
+#tech-review-panel .tr-api-group summary{color:#315d7a;font-size:10px;cursor:pointer}
+#tech-review-panel .tr-api-subrow{margin:5px 0 0 8px;border:1px solid #d9e6ee;border-left:0;border-radius:4px;background:#fff}
+#tech-review-panel .tr-api-fixed>.tr-api-editor{margin:7px 0 2px}
+#tech-review-panel .tr-api-main code,#tech-review-panel .tr-api-main strong,#tech-review-panel .tr-api-main span{font-size:11px;line-height:1.4;overflow-wrap:anywhere;color:#193744}
+#tech-review-panel .tr-api-main code{font-family:ui-monospace,SFMono-Regular,monospace;color:#165290}
+#tech-review-panel .tr-api-meta{margin-top:4px;color:#637884;font-size:10px}
+#tech-review-panel .tr-api-editor{border:1px solid #bad1df;background:#f5f9fb;border-radius:7px;padding:10px;margin-top:8px}
+#tech-review-panel .tr-api-editor h5{margin:0 0 7px;color:#1d4d6d}
+#tech-review-panel .tr-api-editor label{display:block;margin:6px 0;color:#315367;font-size:11px;font-weight:600}
+#tech-review-panel .tr-api-editor input:not([type="checkbox"]),#tech-review-panel .tr-api-editor select{display:block;width:100%;box-sizing:border-box;padding:6px;margin-top:3px;border:1px solid #aebfc9;border-radius:4px;background:#fff;color:#203c4d}
+#tech-review-panel .tr-api-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}

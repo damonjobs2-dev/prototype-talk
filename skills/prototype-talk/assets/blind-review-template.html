@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Prototype Talk · 说明卡盲评</title>
+  <style>
+    :root { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; color: #20344a; background: #f5f7fa; }
+    * { box-sizing: border-box; }
+    body { max-width: 1000px; margin: auto; padding: 24px 18px 80px; }
+    p, li { line-height: 1.6; }
+    .intro, .case, .card, .feedback { background: white; border: 1px solid #d9e3ec; border-radius: 12px; padding: 18px; margin: 14px 0; }
+    .intro { background: #edf5ff; }
+    .muted { color: #687d90; }
+    .card summary { cursor: pointer; font-weight: 700; font-size: 18px; }
+    .card[open] summary { border-bottom: 1px solid #e6edf3; padding-bottom: 12px; }
+    .headline { padding: 12px; border-left: 4px solid #3174ce; background: #eef6ff; }
+    .fact { padding: 10px 0; border-bottom: 1px solid #edf1f5; }
+    .fact small { display: block; color: #657b8c; margin-top: 5px; }
+    .tag { display: inline-block; background: #edf2f7; border-radius: 5px; padding: 2px 6px; margin-right: 7px; font-size: 12px; }
+    label { display: block; margin: 12px 0 5px; font-weight: 600; }
+    select, textarea, input { width: 100%; border: 1px solid #b9c8d7; border-radius: 7px; padding: 9px; font: inherit; }
+    textarea { min-height: 76px; }
+    button { border: 1px solid #286bc2; border-radius: 7px; color: #16559f; background: white; padding: 9px 14px; font: inherit; cursor: pointer; }
+    #export { color: white; background: #286bc2; }
+    .bottom { position: sticky; bottom: 0; background: #f5f7fa; border-top: 1px solid #d9e3ec; padding: 12px 0; }
+  </style>
+</head>
+<body>
+  <h1>Prototype Talk · 说明卡盲评</h1>
+  <div id="pause-notice" class="intro" hidden></div>
+  <div class="intro">
+    <p>每个案例有“版本 1”和“版本 2”。请分别打开对应的原型说明，在相同的“产品说明 / 技术说明 / 证据核对 / 评审待办”页签中查看，再返回本页评分。版本编号是随机的，本页不显示生成方式。计时从打开每版开始。</p>
+    <p class="muted">重点看：操作结果是否准确、PRD 与 Demo 是否分清、接口有无凭空确定、问题是否真正需要补充。可以操作原型核对；评估期间请不要在说明窗内点“确认”或“补充”，以免改动待比较的卡片。若两版没有实质差异，直接选“差不多”，无需强行挑出胜者。评完后导出结果文件。</p>
+  </div>
+  <main id="cases"></main>
+  <div class="bottom"><button id="export">导出我的评估结果</button> <span class="muted">评估先保存在当前浏览器。</span></div>
+  <script>
+    const cases = __BLIND_CASES__;
+    const reviewStatus = __BLIND_STATUS__;
+    if (reviewStatus.paused) {
+      const notice = document.querySelector('#pause-notice');
+      notice.hidden = false;
+      notice.textContent = `本轮对比已暂停，无需评分。${reviewStatus.reason || ''}`;
+      document.querySelector('.intro:not(#pause-notice)').hidden = true;
+      document.querySelector('#cases').hidden = true;
+      document.querySelector('.bottom').hidden = true;
+    }
+    const storageKey = 'prototype-talk-blind-v2-' + cases.map(item => item.case_id).join('-') + location.search;
+    const scores = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    const started = {};
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+    const persist = () => localStorage.setItem(storageKey, JSON.stringify(scores));
+    function versionHtml(version, index, caseId) {
+      const id = caseId + '-' + index;
+      return '<details class="card" data-version="' + escapeHtml(id) + '"><summary>' + escapeHtml(version.label) + ' · 点击开始计时</summary>' +
+        (version.viewer_url ? '<p class="headline"><a href="' + escapeHtml(version.viewer_url) + '" target="_blank" rel="noopener noreferrer">在原型中查看' + escapeHtml(version.label) + '的产品、技术与证据说明 ↗</a></p><p class="muted">原型交互照常执行；评完后回到这里填写判断。</p>' : '<p class="muted">原型预览尚未生成，请先运行 benchmark-preview。</p>') +
+        '<div class="feedback">' +
+        '<label>准确性</label><select data-score="' + escapeHtml(id) + '" data-field="accuracy"><option value="">请选择</option><option value="correct">基本正确</option><option value="partial">部分正确</option><option value="wrong">有明显错误</option><option value="unsure">无法判断</option></select>' +
+        '<label>是否一眼看懂</label><select data-score="' + escapeHtml(id) + '" data-field="clarity"><option value="">请选择</option><option value="clear">清楚</option><option value="somewhat">需要细读</option><option value="unclear">不清楚</option></select>' +
+        '<label>哪里不准、缺了什么、需要怎样修改</label><textarea data-score="' + escapeHtml(id) + '" data-field="notes"></textarea>' +
+        '<label>如果要改到可用于评审，预计还需多少分钟？</label><input type="number" min="0" step="1" data-score="' + escapeHtml(id) + '" data-field="revision_minutes">' +
+        '<p class="muted" data-timing="' + escapeHtml(id) + '">尚未完成</p><button data-finish="' + escapeHtml(id) + '">完成这版</button></div></details>';
+    }
+    document.querySelector('#cases').innerHTML = cases.map((item, index) =>
+      '<section class="case"><h2>案例 ' + (index + 1) + ' · ' + escapeHtml(item.operation_label || item.project_label) + '</h2><p class="muted">' +
+      escapeHtml(item.project_label) + ' · ' + escapeHtml(item.logical_screen_id) +
+      (item.prototype_url ? ' · <a href="' + escapeHtml(item.prototype_url) + '" target="_blank" rel="noopener noreferrer">打开原 Demo 核对</a>' : '') + '</p>' +
+      item.versions.map((version, versionIndex) => versionHtml(version, versionIndex + 1, item.case_id)).join('') +
+      '<label>哪一版更适合拿去评审？</label><select data-preference="' + escapeHtml(item.case_id) + '"><option value="">请选择</option><option value="1">版本 1</option><option value="2">版本 2</option><option value="equal">差不多</option><option value="neither">都需要重写</option></select></section>'
+    ).join('');
+    for (const field of document.querySelectorAll('[data-score]')) field.value = scores[field.dataset.score]?.[field.dataset.field] || '';
+    for (const field of document.querySelectorAll('[data-preference]')) field.value = scores['preference-' + field.dataset.preference] || '';
+    document.addEventListener('toggle', event => {
+      const item = event.target;
+      if (item.matches?.('[data-version]') && item.open && !started[item.dataset.version] && !scores[item.dataset.version]?.finished_at)
+        started[item.dataset.version] = Date.now();
+    }, true);
+    document.addEventListener('input', event => {
+      const field = event.target;
+      if (field.dataset.score) {
+        const id = field.dataset.score;
+        scores[id] = { ...(scores[id] || {}), [field.dataset.field]: field.value };
+        persist();
+      }
+      if (field.dataset.preference) {
+        scores['preference-' + field.dataset.preference] = field.value;
+        persist();
+      }
+    });
+    document.addEventListener('click', event => {
+      const id = event.target.dataset.finish;
+      if (!id) return;
+      scores[id] = { ...(scores[id] || {}), elapsed_ms: (scores[id]?.elapsed_ms || 0) + (started[id] ? Date.now() - started[id] : 0), finished_at: new Date().toISOString() };
+      delete started[id];
+      persist();
+      document.querySelector('[data-timing="' + id + '"]').textContent = '已保存，用时 ' + Math.round(scores[id].elapsed_ms / 1000) + ' 秒';
+    });
+    document.querySelector('#export').onclick = () => {
+      const blob = new Blob([JSON.stringify({ schema_version: 1, exported_at: new Date().toISOString(), scores }, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'prototype-talk-blind-scores.json';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    };
+  </script>
+</body>
+</html>

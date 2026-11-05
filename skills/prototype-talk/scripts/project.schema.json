@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "title": { "type": "string" },
+          "purpose": { "type": "string" },
+          "layout": { "type": "array", "items": { "$ref": "#/$defs/fact" } },
+          "functions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "outcome": { "type": "string" },
+                "operation_ids": { "type": "array", "items": { "type": "string" } },
+                "origin": { "$ref": "#/$defs/origin" },
+                "evidence": { "type": "array", "items": { "type": "string" } }
+              },
+              "required": ["name", "outcome", "operation_ids", "origin", "evidence"],
+              "additionalProperties": false
+            }
+          },
+          "states": { "type": "array", "items": { "$ref": "#/$defs/fact" } },
+          "data": { "type": "array", "items": { "$ref": "#/$defs/fact" } },
+          "open_questions": { "type": "array", "items": { "type": "string" } },
+          "evidence": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["path", "title", "purpose", "layout", "functions", "states", "data", "open_questions", "evidence"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["pages"],
+  "additionalProperties": false,
+  "$defs": {
+    "origin": { "type": "string", "enum": ["source_observed", "documented", "proposed"] },
+    "fact": {
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "origin": { "$ref": "#/$defs/origin" },
+        "evidence": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["text", "origin", "evidence"],
+      "additionalProperties": false
+    }
+  }
+}

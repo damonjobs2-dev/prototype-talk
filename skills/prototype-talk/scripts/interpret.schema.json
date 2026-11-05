@@ -1,0 +1,90 @@
+{
+  "type": "object",
+  "properties": {
+    "title": { "type": "string" },
+    "summary": { "type": "string" },
+    "page_context": {
+      "type": "object",
+      "properties": {
+        "purpose": { "type": "string" },
+        "layout": { "type": "string" },
+        "evidence": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["purpose", "layout", "evidence"],
+      "additionalProperties": false
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "section": { "type": "string", "enum": ["behavior", "constraint", "field", "data", "interface", "flow", "visual"] },
+          "text": { "type": "string" },
+          "detail": { "type": "string" },
+          "origin": { "type": "string", "enum": ["source_observed", "runtime_observed", "documented", "user_supplied", "proposed"] },
+          "evidence": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["section", "text", "detail", "origin", "evidence"],
+        "additionalProperties": false
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string" },
+          "reason": { "type": "string" },
+          "kind": { "type": "string", "enum": ["prd_demo_mismatch", "test_gap", "technical_gap", "product_question"] },
+          "prd_fact": { "type": "string" },
+          "demo_fact": { "type": "string" },
+          "evidence": { "type": "array", "items": { "type": "string" } },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "label": { "type": "string" },
+                "type": { "type": "string", "enum": ["choice", "text"] },
+                "options": { "type": "array", "items": { "type": "string" } },
+                "placeholder": { "type": "string" }
+              },
+              "required": ["key", "label", "type", "options", "placeholder"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["text", "reason", "kind", "prd_fact", "demo_fact", "evidence", "questions"],
+        "additionalProperties": false
+      }
+    },
+    "expected_effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string" },
+          "change": { "type": "string" },
+          "condition": { "type": "string" },
+          "verification": { "type": "string" },
+          "origin": { "type": "string", "enum": ["source_observed", "runtime_observed", "documented", "user_supplied", "proposed"] },
+          "evidence": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["target", "change", "condition", "verification", "origin", "evidence"],
+        "additionalProperties": false
+      }
+    },
+    "expected_after": {
+      "type": "object",
+      "properties": {
+        "route_contains": { "type": "string" },
+        "visible_text": { "type": "string" }
+      },
+      "required": ["route_contains", "visible_text"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["title", "summary", "page_context", "claims", "issues", "expected_effects", "expected_after"],
+  "additionalProperties": false
+}
